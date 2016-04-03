@@ -3,7 +3,7 @@ package edu.cwru.sepia.agent.planner.actions;
 import java.util.*;
 import edu.cwru.sepia.agent.planner.GameState;
 import edu.cwru.sepia.agent.planner.Position;
-import edu.cwru.sepia.agent.planner.StateTracker;
+import edu.cwru.sepia.agent.planner.StateSaver;
 import edu.cwru.sepia.agent.planner.entities.Peasant;
 import edu.cwru.sepia.agent.planner.entities.Resource;
 import javafx.geometry.Pos;
@@ -22,8 +22,8 @@ public class MoveK extends StripsAction {
     @Override
     public boolean preconditionsMet(GameState state) {
         for (Position position : positions.values()){
-            if (!position.inBounds(state.getStateTracker().getXExtent(),
-                                    state.getStateTracker().getYExtent())){
+            if (!position.inBounds(state.getStateSaver().getXExtent(),
+                                    state.getStateSaver().getYExtent())){
                 return false;
             }
         }
@@ -34,7 +34,7 @@ public class MoveK extends StripsAction {
     public GameState apply(GameState state) {
         GameState childState = new GameState(state, this);
         for(Peasant peasant : positions.keySet()) {
-            Peasant childPeasant = childState.getStateTracker().getPeasantById(peasant.getID());
+            Peasant childPeasant = childState.getStateSaver().getPeasantById(peasant.getID());
             childPeasant.setPosition(new Position(positions.get(peasant)));
         }
         return childState;

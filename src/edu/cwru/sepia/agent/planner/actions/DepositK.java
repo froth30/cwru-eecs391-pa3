@@ -37,8 +37,8 @@ public class DepositK extends StripsAction {
     public GameState apply(GameState state) {
         GameState childState = new GameState(state, this);
         for (Peasant peasant : peasantsToDeposit) {
-            Peasant childPeasant = childState.getStateTracker().getPeasantById(peasant.getID());
-            childState.getStateTracker()
+            Peasant childPeasant = childState.getStateSaver().getPeasantById(peasant.getID());
+            childState.getStateSaver()
                     .addResource(childPeasant.getCargoType(), childPeasant.getCargoAmount());
             childPeasant.carry(null, 0);
             //this is assuming the peasants and positions are added to their respective lists in the same order

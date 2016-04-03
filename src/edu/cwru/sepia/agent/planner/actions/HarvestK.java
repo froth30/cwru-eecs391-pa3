@@ -39,8 +39,8 @@ public class HarvestK extends StripsAction {
     public GameState apply(GameState state) {
         GameState childState = new GameState(state, this);
         for(Peasant peasant : peasantsAtResource.keySet()) {
-                Peasant childPeasant = childState.getStateTracker().getPeasantById(peasant.getID());
-                childResource = childState.getStateTracker().getResourceById(
+                Peasant childPeasant = childState.getStateSaver().getPeasantById(peasant.getID());
+                childResource = childState.getStateSaver().getResourceById(
                         peasantsAtResource.get(peasant).getID());
                 if (childResource != null) {
                     childPeasant.carry(childResource.getType(), 100);

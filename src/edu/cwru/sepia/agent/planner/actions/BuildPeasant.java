@@ -23,15 +23,15 @@ public class BuildPeasant extends StripsAction {
 
     @Override
     public boolean preconditionsMet(GameState state) {
-        return state.getStateTracker().getCurrentGold() >= 400 && state.getStateTracker().getCurrentFood() < 3;
+        return state.getStateSaver().getCurrentGold() >= 400 && state.getStateSaver().getCurrentFood() < 3;
     }
 
     @Override
     public GameState apply(GameState state) {
         gameState = state;
         GameState childState = new GameState(state, this);
-        childState.getStateTracker().buyPeasant();
-        List<Peasant> childPeasants = childState.getStateTracker().getPeasants();
+        childState.getStateSaver().buyPeasant();
+        List<Peasant> childPeasants = childState.getStateSaver().getPeasants();
         childPeasants.add(new Peasant(townhall, childPeasants));
         return childState;
     }

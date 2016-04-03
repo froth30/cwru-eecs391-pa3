@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 /**
  * This class is used as a lightweight shell for pseudo-tracking an actual game state object
  */
-public class StateTracker {
+public class StateSaver {
 
     private int playerNum;
     private int turnNumber;
@@ -34,29 +34,29 @@ public class StateTracker {
     private GameState parent;
 
     /**
-     * This constructor initializes this state tracker using another state tracker
+     * This constructor initializes this state saver using another state saver
      *
-     * @param stateTracker The state tracker to represent by this tracker
+     * @param stateSaver The state saver to represent by this saver
      */
-    public StateTracker(StateTracker stateTracker, GameState parent) {
-        xExtent = stateTracker.xExtent;
-        yExtent = stateTracker.yExtent;
-        turnNumber = stateTracker.turnNumber;
-        playerNum = stateTracker.playerNum;
-        requiredGold = stateTracker.requiredGold;
-        requiredWood = stateTracker.requiredWood;
-        buildPeasants = stateTracker.buildPeasants;
-        currentWood = stateTracker.currentWood;
-        currentGold = stateTracker.currentGold;
-        peasants.addAll(stateTracker.peasants.stream().map(Peasant::new).collect(Collectors.toList()));
-        forests.addAll(stateTracker.forests.stream().map(Forest::new).collect(Collectors.toList()));
-        goldMines.addAll(stateTracker.goldMines.stream().map(GoldMine::new).collect(Collectors.toList()));
-        townhall = new Townhall(stateTracker.getTownhall());
+    public StateSaver(StateSaver stateSaver, GameState parent) {
+        xExtent = stateSaver.xExtent;
+        yExtent = stateSaver.yExtent;
+        turnNumber = stateSaver.turnNumber;
+        playerNum = stateSaver.playerNum;
+        requiredGold = stateSaver.requiredGold;
+        requiredWood = stateSaver.requiredWood;
+        buildPeasants = stateSaver.buildPeasants;
+        currentWood = stateSaver.currentWood;
+        currentGold = stateSaver.currentGold;
+        peasants.addAll(stateSaver.peasants.stream().map(Peasant::new).collect(Collectors.toList()));
+        forests.addAll(stateSaver.forests.stream().map(Forest::new).collect(Collectors.toList()));
+        goldMines.addAll(stateSaver.goldMines.stream().map(GoldMine::new).collect(Collectors.toList()));
+        townhall = new Townhall(stateSaver.getTownhall());
         this.parent = parent;
-        currentFood = stateTracker.currentFood;
+        currentFood = stateSaver.currentFood;
     }
 
-    public StateTracker(State.StateView state, int playerNum, int requiredGold, int requiredWood, boolean buildPeasants) {
+    public StateSaver(State.StateView state, int playerNum, int requiredGold, int requiredWood, boolean buildPeasants) {
         xExtent = state.getXExtent();
         yExtent = state.getYExtent();
         turnNumber = state.getTurnNumber();
@@ -87,15 +87,23 @@ public class StateTracker {
         return requiredWood <= currentWood && requiredGold <= currentGold;
     }
 
+    public int getRequiredWood(){
+        return requiredWood;
+    }
+
+    public int getRequiredGold(){
+        return requiredGold;
+    }
+
     @Override
     public boolean equals(Object o) {
-        return o instanceof StateTracker &&
-                currentWood == ((StateTracker) o).currentWood &&
-                currentGold == ((StateTracker) o).currentGold &&
-                peasants.equals(((StateTracker) o).peasants) &&
-                goldMines.equals(((StateTracker) o).goldMines) &&
-                forests.equals(((StateTracker) o).forests) &&
-                townhall.equals(((StateTracker) o).townhall);
+        return o instanceof StateSaver &&
+                currentWood == ((StateSaver) o).currentWood &&
+                currentGold == ((StateSaver) o).currentGold &&
+                peasants.equals(((StateSaver) o).peasants) &&
+                goldMines.equals(((StateSaver) o).goldMines) &&
+                forests.equals(((StateSaver) o).forests) &&
+                townhall.equals(((StateSaver) o).townhall);
     }
 
     @Override
@@ -193,7 +201,7 @@ public class StateTracker {
         if (containsDuplicatePositions(peasants)){
             return Double.POSITIVE_INFINITY;
         }
-        if (peasants.size() > parent.getStateTracker().getPeasants().size()){
+        if (peasants.size() > parent.getStateSaver().getPeasants().size()){
             return 0;
         }
         return heuristic;

@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
  */
 public class GameState implements Comparable<GameState> {
 
-    private StateTracker stateTracker;
+    private StateSaver stateSaver;
     private GameState parent;
     private StripsAction actionFromParentToThis;
 
@@ -41,7 +41,7 @@ public class GameState implements Comparable<GameState> {
      * @param buildPeasants True if the BuildPeasant action should be considered
      */
     public GameState(State.StateView state, int playernum, int requiredGold, int requiredWood, boolean buildPeasants) {
-        this.stateTracker = new StateTracker(state, playernum, requiredGold, requiredWood, buildPeasants);
+        this.stateSaver = new StateSaver(state, playernum, requiredGold, requiredWood, buildPeasants);
     }
 
     /**
@@ -52,15 +52,15 @@ public class GameState implements Comparable<GameState> {
     public GameState(GameState parent, StripsAction actionFromParentToThis){
         this.parent = parent;
         this.actionFromParentToThis = actionFromParentToThis;
-        this.stateTracker = new StateTracker(parent.getStateTracker(), parent);
+        this.stateSaver = new StateSaver(parent.getStateSaver(), parent);
     }
 
     /**
-     * Get the StateTracker object that represents this state.
-     * @return The tracker managing this state
+     * Get the StateSaver object that represents this state.
+     * @return The object managing this state
      */
-    public StateTracker getStateTracker() {
-        return stateTracker;
+    public StateSaver getStateSaver() {
+        return stateSaver;
     }
 
     /**
@@ -71,7 +71,7 @@ public class GameState implements Comparable<GameState> {
      * @return true if the goal conditions are met in this instance of game state.
      */
     public boolean isGoal() {
-        return stateTracker.isGoal();
+        return stateSaver.isGoal();
     }
 
     /**
@@ -83,9 +83,9 @@ public class GameState implements Comparable<GameState> {
     public List<GameState> generateChildren() {
         List<GameState> children = new ArrayList<>();
         // Generate a state resulting from building a peasant, if possible
-        if (stateTracker.mustBuildPeasants()) {
+        if (stateSaver.mustBuildPeasants()) {
             List<Townhall> townhall = new ArrayList<>();
-            townhall.add(stateTracker.getTownhall());
+            townhall.add(stateSaver.getTownhall());
             BuildPeasant buildPeasant = new BuildPeasant(townhall);
             if (buildPeasant.preconditionsMet(this)) {
                 children.add(buildPeasant.apply(this));
@@ -102,17 +102,17 @@ public class GameState implements Comparable<GameState> {
     private List<GameState> generateSomeStuff() {
             List<GameState> children = new ArrayList<>();
             // Add all possible states resulting from performing moves
-            MoveK move = new MoveK(stateTracker.getPeasants(), generatePositions());
+            MoveK move = new MoveK(stateSaver.getPeasants(), generatePositions());
             if (move.preconditionsMet(this)) {
                 children.add(move.apply(this));
             }
             // Add all possible states resulting from performing deposits
-            DepositK deposit = new DepositK(stateTracker.getPeasants(), stateTracker.getTownhall());
+            DepositK deposit = new DepositK(stateSaver.getPeasants(), stateSaver.getTownhall());
             if (deposit.preconditionsMet(this)) {
                 children.add(deposit.apply(this));
             }
             //add all possible states resulting from harvests
-            HarvestK harvest = new HarvestK(stateTracker.getPeasants(), generateResources());
+            HarvestK harvest = new HarvestK(stateSaver.getPeasants(), generateResources());
             if (harvest.preconditionsMet(this)) {
                 children.add(harvest.apply(this));
             }
@@ -121,9 +121,9 @@ public class GameState implements Comparable<GameState> {
 
     private Map<Peasant, Resource> generateResources() {
         Map<Peasant, Resource> resourceMap = new HashMap<>();
-        for (Peasant peasant : stateTracker.getPeasants()){
+        for (Peasant peasant : stateSaver.getPeasants()){
             for (Position position : peasant.getPosition().getAdjacentPositions()){
-                stateTracker.getAllResources().stream().filter(resource
+                stateSaver.getAllResources().stream().filter(resource
                         -> resource.getPosition().equals(position)).forEach(resource
                         -> resourceMap.put(peasant, resource));
             }
@@ -138,7 +138,7 @@ public class GameState implements Comparable<GameState> {
     private Map<Peasant, Position> generatePositions() {
         Map<Peasant, Position> peasantPositionMap = new HashMap<>();
         List<Position> closedPositions = new ArrayList<>();
-        for (Peasant peasant : stateTracker.getPeasants()){
+        for (Peasant peasant : stateSaver.getPeasants()){
             Position position = generateViablePosition(peasant, closedPositions);
             peasantPositionMap.put(peasant, position);
             closedPositions.add(position);
@@ -157,14 +157,14 @@ public class GameState implements Comparable<GameState> {
         if (peasant.getCargoAmount() == 0) {
 
 
-            if (stateTracker.woodNeeded()) {
-                positions.addAll(stateTracker.getForests().stream()
+            if (stateSaver.woodNeeded()) {
+                positions.addAll(stateSaver.getForests().stream()
                         .filter(resource -> resource.getAmountRemaining() > 0)
                         .map(resource -> getBestPosition(peasant,
                                 resource.getPosition().getAdjacentPositions(),
                                 closedPositions)).collect(Collectors.toList()));
             } else {
-                positions.addAll(stateTracker.getGoldMines().stream()
+                positions.addAll(stateSaver.getGoldMines().stream()
                         .filter(resource -> resource.getAmountRemaining() > 0)
                         .map(resource -> getBestPosition(peasant,
                                 resource.getPosition().getAdjacentPositions(),
@@ -173,7 +173,7 @@ public class GameState implements Comparable<GameState> {
 
         } else {
             positions.add(getBestPosition(peasant,
-                    stateTracker.getTownhall().getPosition().getAdjacentPositions(),
+                    stateSaver.getTownhall().getPosition().getAdjacentPositions(),
                     closedPositions));
 
         }
@@ -212,7 +212,7 @@ public class GameState implements Comparable<GameState> {
      * @return The value estimated remaining cost to reach a goal state from this state.
      */
     public double heuristic() {
-        return stateTracker.heuristic();
+        return stateSaver.heuristic();
     }
 
     /**
@@ -255,7 +255,7 @@ public class GameState implements Comparable<GameState> {
      */
     @Override
     public boolean equals(Object o) {
-        return o instanceof GameState && stateTracker.equals((((GameState) o).getStateTracker()));
+        return o instanceof GameState && stateSaver.equals((((GameState) o).getStateSaver()));
     }
 
     /**
@@ -266,7 +266,7 @@ public class GameState implements Comparable<GameState> {
      */
     @Override
     public int hashCode() {
-        return stateTracker.hashCode();
+        return stateSaver.hashCode();
     }
 
     public GameState getParent() {
@@ -278,7 +278,7 @@ public class GameState implements Comparable<GameState> {
     }
 
     public void removeResource(Resource resource) {
-        stateTracker.removeResource(resource);
+        stateSaver.removeResource(resource);
     }
 
 }
